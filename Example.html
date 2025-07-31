@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Duck Coin Dash</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+  html,body {
+    margin:0; height:100%; overflow:hidden;
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(#87ceeb 0%,#228B22 90%);
+  }
+  canvas {
+    position:absolute; inset:0; width:100vw; height:100vh;
+  }
+  #score {
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    z-index:10; font:700 24px/1 sans-serif; color:#fff;
+    text-shadow:1px 1px 2px #000;
+  }
+  #bossHealth {
+    position:absolute; top:50px; left:50%; transform:translateX(-50%);
+    z-index:10; font:700 20px/1 sans-serif; color:#fff;
+    text-shadow:1px 1px 2px #000; display:none;
+  }
+  #controls {
+    position:absolute; top:10px; left:10px; display:none;
+    flex-direction:column; align-items:flex-start; gap:6px; z-index:30;
+  }
+  #message {
+    display:none; font:700 36px/1 sans-serif; color:#fff;
+    text-shadow:3px 3px 6px #000; white-space:nowrap; margin-bottom:6px;
+    user-select:none;
+  }
+  #buttonRow {
+    display:flex; gap:10px;
+  }
+  #controls button {
+    font:16px sans-serif; padding:6px 12px; border:0; border-radius:8px;
+    background:gold; color:#000; cursor:pointer;
+  }
+  #controls button:focus, #controls button:active {
+    outline:none; box-shadow:none;
+  }
+  #menu {
+    position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+    background:rgba(0,0,0,.8); padding:40px 60px; border-radius:15px;
+    text-align:center; display:none; z-index:40; color:#fff;
+    min-width:300px;
+  }
+  #menu p {
+    margin:0 0 30px 0; font:30px/1.2 sans-serif; white-space:pre-line;
+  }
+  #menu button, #resetBtn, .level-btn, #shopBtn, #saveBtn {
+    font:22px sans-serif; padding:14px 28px; margin:10px 12px; border:0;
+    border-radius:10px; background:gold; color:#000; cursor:pointer;
+    display:inline-block;
+  }
+  .level-btn.locked {
+    background:gray!important; cursor:not-allowed;
+  }
+  #levelSelect {
+    position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+    text-align:center; padding:50px 70px; border-radius:20px;
+    background:rgba(0,0,0,.7); z-index:30; color:#fff;
+  }
+  #levelSelect h1 {
+    margin:0 0 20px 0; font:64px sans-serif; color:#fff;
+  }
+  #levelSelect p {
+    margin:15px 0; font:34px sans-serif; color:#fff;
+  }
+  #shop {
+    position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+    background:rgba(0,0,0,.9); color:#fff; padding:30px 40px; border-radius:15px;
+    text-align:center; display:none; z-index:50;
+  }
+  #shop h2 {
+    margin-top:0;
+  }
+  #shop button {
+    font:20px sans-serif; margin:10px; padding:10px 25px; border-radius:8px;
+    background:gold; color:#000; cursor:pointer; border:0;
+  }
+  #shop .close {
+    background:#f55; color:#fff;
+  }
+  .purchased {
+    background:#4CAF50!important; color:#fff!important;
+  }
+  .game-over-message {
+    position:absolute; top:30%; left:50%; transform:translate(-50%, -50%);
+    font:700 48px/1 sans-serif; color:#fff; text-shadow:3px 3px 6px #000;
+    z-index:35; text-align:center;
+  }
+  #debugInfo {
+    position:absolute; top:50px; left:10px; color:#fff; font:14px monospace;
+    background:rgba(0,0,0,0.5); padding:10px; border-radius:5px;
+    z-index:20; display:none;
+  }
+  .boss-warning {
+    position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+    font:700 64px/1 sans-serif; color:#ff0000; text-shadow:3px 3px 6px #000;
+    z-index:60; text-align:center; animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  #endScreen {
+    position:absolute; top:0; left:0; width:100vw; height:100vh;
+    background:linear-gradient(45deg, #000428 0%, #004e92 100%);
+    display:none; z-index:100; overflow:hidden;
+  }
+  #endScreen .stars {
+    position:absolute; width:100%; height:100%;
+    background:transparent;
+  }
+  #endScreen .star {
+    position:absolute; background:#fff; border-radius:50%;
+    animation:twinkle 2s infinite alternate;
+  }
+  #endScreen .content {
+    position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+    text-align:center; color:#fff; z-index:10;
+  }
+  #endScreen h1 {
+    font:700 72px/1 sans-serif; margin:0 0 20px 0;
+    background:linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; animation:goldShine 3s infinite;
+  }
+  #endScreen p {
+    font:32px/1.4 sans-serif; margin:20px 0; text-shadow:2px 2px 4px #000;
+  }
+  #endScreen .trophy {
+    font-size:120px; margin:20px 0; animation:bounce 2s infinite;
+  }
+  #endScreen button {
+    font:24px sans-serif; padding:15px 30px; margin:20px 10px;
+    border:3px solid #ffd700; border-radius:15px; background:rgba(255,215,0,0.2);
+    color:#ffd700; cursor:pointer; transition:all 0.3s ease;
+    backdrop-filter:blur(10px);
+  }
+  #endScreen button:hover {
+    background:#ffd700; color:#000; transform:scale(1.05);
+    box-shadow:0 0 20px rgba(255,215,0,0.5);
+  }
+  @keyframes twinkle {
+    0% { opacity:0.3; transform:scale(1); }
+    100% { opacity:1; transform:scale(1.2); }
+  }
+  @keyframes goldShine {
+    0%, 100% { background-position:0% 50%; }
+    50% { background-position:100% 50%; }
+  }
+  @keyframes bounce {
+    0%, 100% { transform:translateY(0); }
+    50% { transform:translateY(-20px); }
+  }
+  @keyframes fadeInUp {
+    0% { opacity:0; transform:translateY(50px); }
+    100% { opacity:1; transform:translateY(0); }
+  }
+  .fade-in-up {
+    animation:fadeInUp 1s ease-out forwards;
+  }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" tabindex="0"></canvas>
+<div id="score">Score: 0</div>
+<div id="bossHealth">Boss Health: 100</div>
+<div id="debugInfo"></div>
+
+<div id="controls">
+  <div id="message">💀 Duck Over! 💀</div>
+  <div id="buttonRow">
+    <button id="pauseBtn">Pause</button>
+    <button id="muteBtn">Mute</button>
+    <button id="backBtnSide">Menu</button>
+    <button id="debugBtn">Debug</button>
+  </div>
+</div>
+
+<div id="menu">
+  <p id="menuText">Game Over!</p>
+  <button id="redoBtn">Redo Level</button>
+  <button id="backBtn">Back to Menu</button>
+</div>
+
+<div id="shop">
+  <h2>Duck Shop</h2>
+  <p id="coinsTotal">Points: 0</p>
+  <button id="buyJump">Buy Extra Jump<br>500 points</button>
+  <button id="buySlow">Buy Slow Farmer<br>800 points</button><br>
+  <button class="close" id="closeShop">Close</button>
+</div>
+
+<div id="levelSelect">
+  <h1>Duck Coin Dash</h1>
+  <p>Select a Level to Play</p>
+  <div id="levels"></div>
+  <button id="resetBtn">Reset All Progress</button><br>
+  <button id="shopBtn">Shop</button>
+  <button id="saveBtn">Save Progress</button>
+</div>
+
+<div id="endScreen">
+  <div class="stars"></div>
+  <div class="content">
+    <div class="trophy">🏆</div>
+    <h1>GAME COMPLETE!</h1>
+    <p id="finalScore">Final Score: 0 Points</p>
+    <p>🎉 Congratulations! You've defeated the boss and completed Duck Coin Dash! 🎉</p>
+    <p>You are the ultimate duck champion!</p>
+    <button id="playAgainBtn">Play Everything Again</button>
+    <button id="backToMenuBtn">Main Menu</button>
+  </div>
+</div>
+
+<script>
+/* ---------- images ---------- */
+const imgDuck=new Image(),imgDuckFlap=new Image(),imgFarm=new Image(),imgCoin=new Image(),imgBoss=new Image();
+let assets=0;[imgDuck,imgDuckFlap,imgFarm,imgCoin,imgBoss].forEach(i=>i.onload=()=>++assets===5&&init());
+imgDuck.src="https://i.ibb.co/b51H3Dzd/19fb83e4-f090-444d-a4fa-a219daede377.png";
+imgDuckFlap.src="https://i.ibb.co/B5Ywk3cr/3af5c30a-5fae-424a-a0e9-370592ec2dfc.png";
+imgFarm.src="https://i.ibb.co/C3Y7gwWM/0d5c53cd-74c4-40d1-abff-0f6dcb93b003.png";
+imgCoin.src="https://i.ibb.co/67vVB7j6/20c1b0a8-4cbb-49f4-8eff-985e4d70727f.png";
+imgBoss.src="https://i.ibb.co/mVVd4Fk6/f1f0e768-91f2-42ee-99a5-3fc15e21bc82.png";
+
+/* ---------- sounds ---------- */
+const sCoin=new Audio("retro-coin-4-236671.mp3"),
+      sJump=new Audio("wing-flap-1-6434.mp3"),
+      music=new Audio("8bit-sample-69080 (1).mp3");
+music.loop=true;music.volume=.3;
+window.addEventListener("pointerdown",()=>[sCoin,sJump,music].forEach(a=>a.play()
+  .then(()=>{a.pause();a.currentTime=0;}).catch(()=>{})),{once:true});
+
+/* ---------- canvas ---------- */
+const cvs=document.getElementById("gameCanvas"),ctx=cvs.getContext("2d"),groundY=100;
+function resize(){cvs.width=innerWidth;cvs.height=innerHeight;}resize();addEventListener("resize",resize);
+
+/* ---------- DOM refs ---------- */
+const scoreEl=document.getElementById("score"),
+      bossHealthEl=document.getElementById("bossHealth"),
+      controls=document.getElementById("controls"),
+      msg=document.getElementById("message"),
+      levelSel=document.getElementById("levelSelect"),levelsDiv=document.getElementById("levels"),
+      menu=document.getElementById("menu"),menuText=document.getElementById("menuText"),
+      redoBtn=document.getElementById("redoBtn"),
+      backBtn=document.getElementById("backBtn"),backBtnSide=document.getElementById("backBtnSide"),
+      pauseBtn=document.getElementById("pauseBtn"),muteBtn=document.getElementById("muteBtn"),
+      shop=document.getElementById("shop"),shopBtn=document.getElementById("shopBtn"),
+      closeShop=document.getElementById("closeShop"),coinsTotal=document.getElementById("coinsTotal"),
+      buyJump=document.getElementById("buyJump"),buySlow=document.getElementById("buySlow"),
+      resetBtn=document.getElementById("resetBtn"),saveBtn=document.getElementById("saveBtn"),
+      debugBtn=document.getElementById("debugBtn"),debugInfo=document.getElementById("debugInfo"),
+      endScreen=document.getElementById("endScreen"),finalScore=document.getElementById("finalScore"),
+      playAgainBtn=document.getElementById("playAgainBtn"),backToMenuBtn=document.getElementById("backToMenuBtn");
+
+/* ---------- config ---------- */
+const maxLevel=5,grav=0.3,TURN=4;
+let unlocked=[1],level=0,points=0,levelStartPoints=0,showDebug=false,gameCompleted=false;
+let powerUps = {
+  extraJump: false,
+  slowFarmer: false,
+  slowFarmerActive: false,
+  slowFarmerEnd: 0
+};
+const baseCfg={
+  1:{spd:2,rate:2000,jumps:4,jump:-10},
+  2:{spd:2,rate:1800,jumps:3,jump:-10},
+  3:{spd:2,rate:1600,jumps:2,jump:-12},
+  4:{spd:3.5,rate:1400,jumps:2,jump:-12},
+  5:{spd:5,rate:1200,jumps:1,jump:-14}
+};
+let cfg = JSON.parse(JSON.stringify(baseCfg));
+const WIN={1:100,2:200,3:300,4:400,5:500};
+
+/* ---------- boss system ---------- */
+let boss = null;
+let bossWarningTime = 0;
+let bossWarningElement = null;
+let screenShakeTime = 0;
+let particles = [];
+
+function createBoss() {
+  boss = {
+    x: cvs.width - 200,
+    y: cvs.height - groundY - 150,
+    w: 150,
+    h: 150,
+    health: 8000,
+    maxHealth: 8000,
+    spd: 3.5,
+    baseSpd: 3.5,
+    vx: 0,
+    vy: 0,
+    state: 'entering',
+    stateTimer: 0,
+    attackCooldown: 0,
+    flip: false,
+    scale: 1,
+    rotation: 0,
+    glowIntensity: 0,
+    lastAttackTime: 0,
+    attackPattern: 0,
+    stunTime: 0,
+    projectiles: [],
+    targetX: 0,
+    enrageThreshold: 4000,
+    enraged: false,
+    multiAttackCount: 0,
+    dashCooldown: 0,
+    teleportCooldown: 0
+  };
+  
+  showBossWarning();
+  shakeScreen(2000);
+}
+
+function showBossWarning() {
+  if (bossWarningElement) {
+    document.body.removeChild(bossWarningElement);
+  }
+  
+  bossWarningElement = document.createElement('div');
+  bossWarningElement.className = 'boss-warning';
+  bossWarningElement.textContent = '⚠️ BOSS BATTLE ⚠️';
+  document.body.appendChild(bossWarningElement);
+  
+  bossWarningTime = 3000;
+}
+
+function shakeScreen(duration) {
+  screenShakeTime = duration;
+  document.body.style.animation = `shake 0.1s infinite`;
+  setTimeout(() => {
+    document.body.style.animation = '';
+  }, duration);
+}
+
+function updateBoss(dt) {
+  if (!boss) return;
+  
+  if (bossWarningTime > 0) {
+    bossWarningTime -= dt * 16.667;
+    if (bossWarningTime <= 0 && bossWarningElement) {
+      document.body.removeChild(bossWarningElement);
+      bossWarningElement = null;
+    }
+  }
+  
+  if (screenShakeTime > 0) {
+    screenShakeTime -= dt * 16.667;
+  }
+  
+  boss.stateTimer += dt * 16.667;
+  boss.attackCooldown -= dt * 16.667;
+  boss.dashCooldown -= dt * 16.667;
+  boss.teleportCooldown -= dt * 16.667;
+  
+  if (!boss.enraged && boss.health <= boss.enrageThreshold) {
+    boss.enraged = true;
+    boss.spd = boss.baseSpd * 1.5;
+    boss.scale = 1.2;
+    shakeScreen(1500);
+    createParticles(boss.x + boss.w/2, boss.y + boss.h/2, 30, '#ff0000');
+  }
+  
+  switch (boss.state) {
+    case 'entering':
+      boss.scale = 1 + Math.sin(boss.stateTimer * 0.01) * 0.2;
+      boss.glowIntensity = Math.sin(boss.stateTimer * 0.02) * 0.5 + 0.5;
+      
+      if (boss.stateTimer > 3000) {
+        boss.state = 'chasing';
+        boss.stateTimer = 0;
+        boss.scale = boss.enraged ? 1.2 : 1;
+      }
+      break;
+      
+    case 'chasing':
+      const dx = duck.x - boss.x;
+      const dy = duck.y - boss.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      boss.flip = dx < 0;
+      
+      if (dist > 30) {
+        boss.vx = Math.sign(dx) * boss.spd;
+        boss.vy = Math.sign(dy) * boss.spd * 0.7;
+      } else {
+        boss.vx *= 0.9;
+        boss.vy *= 0.9;
+      }
+      
+      const baseAttackRate = boss.enraged ? 1500 : 2500;
+      
+      if (boss.attackCooldown <= 0) {
+        if (boss.enraged && boss.multiAttackCount < 3) {
+          boss.attackPattern = Math.floor(Math.random() * 4);
+          boss.multiAttackCount++;
+          boss.attackCooldown = 800;
+        } else {
+          boss.attackPattern = Math.floor(Math.random() * 4);
+          boss.multiAttackCount = 0;
+          boss.attackCooldown = baseAttackRate;
+        }
+        
+        switch (boss.attackPattern) {
+          case 0:
+            boss.state = 'attacking';
+            boss.stateTimer = 0;
+            boss.vx = Math.sign(dx) * (boss.enraged ? 12 : 10);
+            break;
+            
+          case 1:
+            boss.state = 'jumping';
+            boss.stateTimer = 0;
+            const duckVelocity = duck.vx || 0;
+            boss.targetX = duck.x + duckVelocity * 30;
+            boss.vy = boss.enraged ? -30 : -25;
+            boss.vx = 0;
+            break;
+            
+          case 2:
+            boss.state = 'attacking';
+            boss.stateTimer = 0;
+            const numProjectiles = boss.enraged ? 5 : 3;
+            for (let i = 0; i < numProjectiles; i++) {
+              setTimeout(() => spawnProjectile(i * 0.3), i * 200);
+            }
+            break;
+            
+          case 3:
+            if (boss.dashCooldown <= 0 && dist > 100) {
+              boss.state = 'dashing';
+              boss.stateTimer = 0;
+              boss.dashCooldown = 4000;
+              boss.vx = Math.sign(dx) * 15;
+              boss.vy = 0;
+            } else {
+              boss.state = 'attacking';
+              boss.stateTimer = 0;
+              boss.vx = Math.sign(dx) * 10;
+            }
+            break;
+        }
+      }
+      
+      if (boss.enraged && boss.teleportCooldown <= 0 && dist > 200 && Math.random() < 0.02) {
+        boss.state = 'teleporting';
+        boss.stateTimer = 0;
+        boss.teleportCooldown = 6000;
+      }
+      break;
+      
+    case 'attacking':
+      boss.rotation = Math.sin(boss.stateTimer * 0.02) * 0.2;
+      boss.glowIntensity = 0.8;
+      
+      if (boss.attackPattern === 0) {
+        createParticles(boss.x, boss.y + boss.h/2, 8, '#ff4444');
+      }
+      
+      if (boss.stateTimer > (boss.enraged ? 1000 : 1500)) {
+        boss.state = 'chasing';
+        boss.stateTimer = 0;
+        boss.rotation = 0;
+        boss.glowIntensity = 0;
+      }
+      break;
+      
+    case 'dashing':
+      boss.glowIntensity = 1.0;
+      boss.scale = boss.enraged ? 1.3 : 1.1;
+      createParticles(boss.x, boss.y + boss.h/2, 12, '#ffaa00');
+      
+      if (boss.stateTimer > 1000) {
+        boss.state = 'chasing';
+        boss.stateTimer = 0;
+        boss.scale = boss.enraged ? 1.2 : 1;
+        boss.glowIntensity = 0;
+      }
+      break;
+      
+    case 'teleporting':
+      boss.glowIntensity = 1.0;
+      boss.scale = 1 + Math.sin(boss.stateTimer * 0.1) * 0.3;
+      createParticles(boss.x + boss.w/2, boss.y + boss.h/2, 5, '#ff00ff');
+      
+      if (boss.stateTimer > 1000) {
+        const teleportAngle = Math.random() * Math.PI * 2;
+        const teleportDist = 100 + Math.random() * 100;
+        boss.x = duck.x + Math.cos(teleportAngle) * teleportDist;
+        boss.y = duck.y + Math.sin(teleportAngle) * teleportDist;
+        
+        boss.x = Math.max(0, Math.min(cvs.width - boss.w, boss.x));
+        boss.y = Math.max(0, Math.min(cvs.height - groundY - boss.h, boss.y));
+        
+        boss.state = 'chasing';
+        boss.stateTimer = 0;
+        boss.scale = boss.enraged ? 1.2 : 1;
+        boss.glowIntensity = 0;
+        shakeScreen(500);
+        createParticles(boss.x + boss.w/2, boss.y + boss.h/2, 20, '#ff00ff');
+      }
+      break;
+      
+    case 'jumping':
+      boss.glowIntensity = 1.0;
+      boss.rotation = Math.sin(boss.stateTimer * 0.05) * 0.5;
+      
+      if (boss.y < -boss.h - 50) {
+        boss.x = boss.targetX - boss.w/2;
+        boss.x = Math.max(0, Math.min(cvs.width - boss.w, boss.x));
+        boss.vy = boss.enraged ? 25 : 20;
+        createParticles(boss.x + boss.w/2, 0, 12, '#ff0000');
+      }
+      
+      if (boss.y < -boss.h) {
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        const warningSize = 60 + Math.sin(boss.stateTimer * 0.1) * 15;
+        ctx.arc(boss.x + boss.w/2, cvs.height - groundY - 10, warningSize, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        createParticles(boss.x + boss.w/2, -20, 5, '#ffaa00');
+      }
+      
+      const jumpGroundLevel = cvs.height - groundY - boss.h;
+      if (boss.y >= jumpGroundLevel && boss.vy > 0) {
+        boss.y = jumpGroundLevel;
+        boss.vy = 0;
+        boss.state = 'chasing';
+        boss.stateTimer = 0;
+        boss.rotation = 0;
+        boss.glowIntensity = 0;
+        
+        shakeScreen(boss.enraged ? 1200 : 800);
+        createParticles(boss.x + boss.w/2, boss.y + boss.h, 30, '#ffaa00');
+        createParticles(boss.x + boss.w/2, boss.y + boss.h, 20, '#ff4444');
+      }
+      break;
+      
+    case 'stunned':
+      boss.scale = (boss.enraged ? 1.2 : 0.8) + Math.sin(boss.stateTimer * 0.05) * 0.1;
+      boss.rotation = Math.sin(boss.stateTimer * 0.03) * 0.1;
+      
+      const stunDuration = boss.enraged ? 1200 : 2000;
+      if (boss.stateTimer > stunDuration) {
+        boss.state = 'chasing';
+        boss.stateTimer = 0;
+        boss.scale = boss.enraged ? 1.2 : 1;
+        boss.rotation = 0;
+      }
+      break;
+      
+    case 'dying':
+      boss.scale += dt * 0.01;
+      boss.rotation += dt * 0.05;
+      boss.glowIntensity = 1;
+      createParticles(boss.x + boss.w/2, boss.y + boss.h/2, 15, '#ffff00');
+      
+      if (boss.stateTimer > 3000) {
+        boss = null;
+        gameCompleted = true;
+        showEndScreen();
+        return;
+      }
+      break;
+  }
+  
+  boss.x += boss.vx * dt;
+  boss.y += boss.vy * dt;
+  
+  if (boss.state !== 'dying' && !(boss.state === 'jumping' && boss.vy < 0 && boss.y > -boss.h)) {
+    boss.vy += grav * dt;
+  }
+  
+  const bossGroundLevel = cvs.height - groundY - boss.h;
+  if (boss.y >= bossGroundLevel && boss.state !== 'jumping') {
+    boss.y = bossGroundLevel;
+    boss.vy = 0;
+  }
+  
+  boss.x = Math.max(0, Math.min(cvs.width - boss.w, boss.x));
+  
+  boss.vx *= boss.state === 'dashing' ? 0.98 : 0.95;
+  
+  boss.projectiles = boss.projectiles.filter(proj => {
+    proj.x += proj.vx * dt;
+    proj.y += proj.vy * dt;
+    proj.life -= dt * 16.667;
+    
+    if (boss.enraged && proj.homing) {
+      const pdx = duck.x - proj.x;
+      const pdy = duck.y - proj.y;
+      const pDist = Math.sqrt(pdx * pdx + pdy * pdy);
+      if (pDist > 0) {
+        const homingStrength = 0.1;
+        proj.vx += (pdx / pDist) * homingStrength;
+        proj.vy += (pdy / pDist) * homingStrength;
+      }
+    }
+    
+    if (hit(duck, proj)) {
+      showGameOverMenu();
+      return false;
+    }
+    
+    return proj.life > 0 && proj.x > -50 && proj.x < cvs.width + 50;
+  });
+}
+
+function spawnProjectile(spread = 0) {
+  if (!boss) return;
+  
+  const angle = Math.atan2(duck.y - boss.y, duck.x - boss.x) + (spread - 0.3) * 0.5;
+  const speed = boss.enraged ? 10 : 8;
+  
+  boss.projectiles.push({
+    x: boss.x + boss.w/2,
+    y: boss.y + boss.h/2,
+    w: boss.enraged ? 25 : 20,
+    h: boss.enraged ? 25 : 20,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    life: 4000,
+    homing: boss.enraged && Math.random() < 0.5
+  });
+}
+
+function createParticles(x, y, count, color) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: x + Math.random() * 40 - 20,
+      y: y + Math.random() * 40 - 20,
+      vx: (Math.random() - 0.5) * 10,
+      vy: (Math.random() - 0.5) * 10,
+      life: 1000 + Math.random() * 1000,
+      maxLife: 2000,
+      size: 2 + Math.random() * 4,
+      color: color
+    });
+  }
+}
+
+function updateParticles(dt) {
+  particles = particles.filter(p => {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt * 16.667;
+    p.vy += grav * dt * 0.5;
+    p.vx *= 0.98;
+    
+    return p.life > 0;
+  });
+}
+
+function drawBoss() {
+  if (!boss) return;
+  
+  if (boss.state === 'jumping' && boss.y < -boss.h - 50) {
+    return;
+  }
+  
+  ctx.save();
+  
+  if (boss.glowIntensity > 0) {
+    ctx.shadowColor = boss.enraged ? '#ff0000' : '#ff4444';
+    ctx.shadowBlur = (boss.enraged ? 30 : 20) * boss.glowIntensity;
+  }
+  
+  ctx.translate(boss.x + boss.w/2, boss.y + boss.h/2);
+  ctx.scale(boss.scale, boss.scale);
+  ctx.rotate(boss.rotation);
+  
+  if (boss.flip) {
+    ctx.scale(-1, 1);
+  }
+  
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = boss.enraged ? '#ff4444' : '#ff8888';
+  ctx.fillRect(-boss.w/2, -boss.h/2, boss.w, boss.h);
+  
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(imgBoss, -boss.w/2, -boss.h/2, boss.w, boss.h);
+  
+  if (boss.enraged) {
+    ctx.globalAlpha = 0.3 + Math.sin(performance.now() * 0.01) * 0.2;
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(-boss.w/2, -boss.h/2, boss.w, boss.h);
+    ctx.globalAlpha = 1;
+  }
+  
+  ctx.restore();
+  
+  const barWidth = 250;
+  const barHeight = 25;
+  const barX = cvs.width/2 - barWidth/2;
+  const barY = 30;
+  
+  ctx.fillStyle = '#333';
+  ctx.fillRect(barX, barY, barWidth, barHeight);
+  
+  const healthPercent = boss.health / boss.maxHealth;
+  let healthColor = '#4CAF50';
+  if (healthPercent <= 0.5) healthColor = '#FFA500';
+  if (healthPercent <= 0.25) healthColor = '#F44336';
+  if (boss.enraged) healthColor = '#ff0000';
+  
+  ctx.fillStyle = healthColor;
+  ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+  
+  const enrageX = barX + (barWidth * (boss.enrageThreshold / boss.maxHealth));
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(enrageX, barY);
+  ctx.lineTo(enrageX, barY + barHeight);
+  ctx.stroke();
+  
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(barX, barY, barWidth, barHeight);
+  
+  ctx.fillStyle = boss.enraged ? '#ff0000' : '#fff';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'center';
+  const bossTitle = boss.enraged ? '👹 ENRAGED BOSS 👹' : '👹 BOSS';
+  ctx.fillText(bossTitle, cvs.width/2, barY - 10);
+  ctx.textAlign = 'left';
+  
+  boss.projectiles.forEach(proj => {
+    ctx.save();
+    
+    if (proj.homing) {
+      ctx.shadowColor = '#ff00ff';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#ff00ff';
+    } else {
+      ctx.fillStyle = '#ff4444';
+    }
+    
+    ctx.translate(proj.x + proj.w/2, proj.y + proj.h/2);
+    ctx.rotate(Math.atan2(proj.vy, proj.vx));
+    ctx.fillRect(-proj.w/2, -proj.h/2, proj.w, proj.h);
+    
+    if (proj.homing) {
+      ctx.globalAlpha = 0.3;
+      ctx.fillRect(-proj.w, -proj.h/4, proj.w, proj.h/2);
+    }
+    
+    ctx.restore();
+  });
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    const alpha = p.life / p.maxLife;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function damageBoss(damage) {
+  if (!boss || boss.state === 'dying') return;
+  
+  const actualDamage = boss.enraged ? damage * 0.7 : damage;
+  boss.health -= actualDamage;
+  boss.state = 'stunned';
+  boss.stateTimer = 0;
+  shakeScreen(boss.enraged ? 400 : 300);
+  createParticles(boss.x + boss.w/2, boss.y + boss.h/2, boss.enraged ? 20 : 15, '#ffff00');
+  
+  if (boss.health <= 0) {
+    boss.health = 0;
+    boss.state = 'dying';
+    boss.stateTimer = 0;
+    shakeScreen(1500);
+  }
+}
+
+/* ---------- state ---------- */
+let duck,farm,coins=[],run=false,coinTimer,flapT=0,score=0,paused=false,muted=false,lastFrame,animId;
+let keysPressed = new Set();
+
+/* ---------- helpers ---------- */
+const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+
+/* ---------- UI helpers ---------- */
+function showControls(){controls.style.display="flex";}
+function hideControls(){controls.style.display="none";}
+function showMsg(text){msg.textContent=text;msg.style.display="block";}
+function hideMsg(){msg.style.display="none";}
+function stopMusic(){music.pause();}
+function playMusic(){if(!muted)music.play();}
+
+/* ---------- power-up system ---------- */
+function applyPowerUps() {
+  cfg = JSON.parse(JSON.stringify(baseCfg));
+  if(powerUps.extraJump) {
+    cfg[3].jumps = 3;
+    cfg[4].jumps = 3;
+    cfg[5].jumps = 2;
+  }
+}
+function activateSlowFarmer() {
+  if(powerUps.slowFarmer && run && !powerUps.slowFarmerActive) {
+    powerUps.slowFarmerActive = true;
+    powerUps.slowFarmerEnd = performance.now() + 15000;
+    if (farm) farm.spd = 1;
+    if (boss && boss.state !== 'dying') {
+      boss.spd = boss.enraged ? boss.baseSpd * 1.5 * 0.8 : boss.baseSpd * 0.5;
+    }
+  }
+}
+
+/* ---------- menu builder ---------- */
+function buildLevelMenu(){
+  levelSel.style.display="block";
+  levelsDiv.innerHTML="";
+  for(let i=1;i<=maxLevel;i++){
+    const b=document.createElement("button");
+    b.textContent=`Level ${i}`;b.className="level-btn";
+    if (i === 5) b.textContent += " 👹 BOSS";
+    if(!unlocked.includes(i)){
+      b.disabled=true;b.classList.add("locked");b.textContent+=" 🔒";
+    } else b.onclick=()=>startLevel(i);
+    levelsDiv.appendChild(b);
+  }
+}
+
+/* ---------- reset entities ---------- */
+function resetEntities(){
+  applyPowerUps();
+  const c=cfg[level];
+  duck={x:50,y:cvs.height-groundY-60,w:60,h:60,vx:0,vy:0,jumps:c.jumps,maxJumps:c.jumps,onGround:true,flip:false};
+  
+  if (level === 5) {
+    farm = null;
+    boss = null;
+    bossHealthEl.style.display = "block";
+    setTimeout(() => {
+      if (run && level === 5) {
+        createBoss();
+      }
+    }, 3000);
+  } else {
+    boss = null;
+    bossHealthEl.style.display = "none";
+    farm={x:cvs.width-150,y:cvs.height-groundY-100,w:100,h:100,spd:c.spd,baseSpd:c.spd,flip:false};
+  }
+  
+  coins=[];score=0;flapT=0;particles=[];
+  powerUps.slowFarmerActive = false;
+  powerUps.slowFarmerEnd = 0;
+  scoreEl.textContent="Score: 0";
+  keysPressed.clear();
+  clearInterval(coinTimer);
+  
+  const coinRate = level === 5 ? c.rate * 0.6 : c.rate;
+  coinTimer=setInterval(()=>coins.push({x:cvs.width+50,y:cvs.height-groundY-100-Math.random()*200,w:40,h:40}),coinRate);
+}
+
+/* ---------- start / stop ---------- */
+function startLevel(lv){
+  level=lv;
+  levelStartPoints = points;
+  hideAllMenus();
+  resetEntities();
+  run=true;paused=false;
+  pauseBtn.textContent="Pause";
+  scoreEl.style.display="block";
+  showControls();
+  playMusic();
+  lastFrame=performance.now();
+  animId=requestAnimationFrame(loop);
+  cvs.focus();
+}
+function stopLevel(){
+  run=false;paused=false;pauseBtn.textContent="Pause";
+  clearInterval(coinTimer);
+  if(animId) cancelAnimationFrame(animId);
+  hideControls();stopMusic();hideMsg();
+  scoreEl.style.display="none";
+  bossHealthEl.style.display="none";
+  debugInfo.style.display="none";
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  
+  if (bossWarningElement) {
+    document.body.removeChild(bossWarningElement);
+    bossWarningElement = null;
+  }
+  document.body.style.animation = '';
+}
+function hideAllMenus(){
+  levelSel.style.display="none";
+  menu.style.display="none";
+  shop.style.display="none";
+  endScreen.style.display="none";
+  hideMsg();
+}
+function showGameOverMenu(){
+  stopLevel();
+  points = levelStartPoints;
+  menuText.textContent="💀 Duck Over! 💀";
+  const nextBtn = document.getElementById("nextBtn");
+  if(nextBtn) nextBtn.style.display = "none";
+  redoBtn.style.display="inline-block";
+  backBtn.style.display="inline-block";
+  menu.style.display="block";
+}
+function showEndScreen(){
+  stopLevel();
+  
+  const bossPoints = WIN[5];
+  points += bossPoints;
+  
+  finalScore.textContent = `Final Score: ${points} Points`;
+  
+  createStars();
+  
+  endScreen.style.display = "block";
+  
+  setTimeout(() => {
+    endScreen.querySelector('.trophy').classList.add('fade-in-up');
+  }, 500);
+  setTimeout(() => {
+    endScreen.querySelector('h1').classList.add('fade-in-up');
+  }, 1000);
+  setTimeout(() => {
+    endScreen.querySelectorAll('p').forEach((p, i) => {
+      setTimeout(() => p.classList.add('fade-in-up'), i * 300);
+    });
+  }, 1500);
+  setTimeout(() => {
+    endScreen.querySelectorAll('button').forEach((btn, i) => {
+      setTimeout(() => btn.classList.add('fade-in-up'), i * 200);
+    });
+  }, 2500);
+}
+
+function createStars() {
+  const starsContainer = endScreen.querySelector('.stars');
+  starsContainer.innerHTML = '';
+  
+  for (let i = 0; i < 50; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.width = star.style.height = (Math.random() * 3 + 1) + 'px';
+    star.style.animationDelay = Math.random() * 2 + 's';
+    starsContainer.appendChild(star);
+  }
+}
+function showWinMenu(){
+  stopLevel();
+  const levelPoints = WIN[level];
+  points += levelPoints;
+  
+  let winText = `🎉 Level ${level} Complete! 🎉\nYou earned ${levelPoints} points!\nTotal Points: ${points}`;
+  if (level === 5) {
+    winText = `🏆 BOSS DEFEATED! 🏆\n🎉 GAME COMPLETE! 🎉\nYou earned ${levelPoints} points!\nTotal Points: ${points}`;
+  }
+  
+  menuText.textContent = winText;
+  redoBtn.style.display="inline-block";
+  backBtn.style.display="inline-block";
+  let nextBtn = document.getElementById("nextBtn");
+  if(!nextBtn){
+    nextBtn = document.createElement("button");
+    nextBtn.id = "nextBtn";
+    nextBtn.style.cssText = "font:22px sans-serif; padding:14px 28px; margin:10px 12px; border:0; border-radius:10px; background:gold; color:#000; cursor:pointer; display:inline-block;";
+    menu.appendChild(nextBtn);
+  }
+  const nextLevel = level + 1;
+  if(nextLevel <= maxLevel && level !== 5){
+    nextBtn.textContent = "Next Level";
+    nextBtn.style.display = "inline-block";
+    nextBtn.onclick = () => {
+      if(!unlocked.includes(nextLevel)){
+        unlocked.push(nextLevel);
+      }
+      startLevel(nextLevel);
+    };
+  } else {
+    nextBtn.style.display = "none";
+  }
+  menu.style.display="block";
+}
+function returnToMainMenu(){
+  if(run) stopLevel();
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  hideAllMenus();
+  buildLevelMenu();
+  levelSel.style.display="block";
+}
+
+/* ---------- game loop ---------- */
+function loop(t){
+  if(!run) return;
+  if(paused){
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    ctx.fillStyle="#228B22"; ctx.fillRect(0,cvs.height-groundY,cvs.width,groundY);
+    ctx.font="bold 72px sans-serif"; ctx.fillStyle="#fff"; 
+    ctx.textAlign="center";
+    ctx.fillText("PAUSED",cvs.width/2,cvs.height/2);
+    ctx.textAlign="left";
+    animId=requestAnimationFrame(loop);
+    return;
+  }
+  
+  const dt=Math.min((t-lastFrame)/16.667, 1.5); lastFrame=t;
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  ctx.fillStyle="#228B22"; ctx.fillRect(0,cvs.height-groundY,cvs.width,groundY);
+
+  duck.vy+=grav*dt;
+  duck.y+=duck.vy*dt;
+  duck.x+=duck.vx*dt;
+  
+  if(duck.y<0){duck.y=0; duck.vy=0;}
+  
+  const groundLevel = cvs.height-groundY-duck.h;
+  if(duck.y >= groundLevel){
+    duck.y = groundLevel;
+    duck.vy = 0;
+    duck.onGround = true;
+    if(duck.maxJumps !== Infinity) {
+      duck.jumps = duck.maxJumps;
+    }
+  } else {
+    duck.onGround = false;
+  }
+  
+  duck.x=Math.max(0,Math.min(cvs.width-duck.w,duck.x));
+
+  ctx.save();
+  if(powerUps.slowFarmerActive) ctx.globalAlpha=.8;
+  if(duck.flip){
+    ctx.translate(duck.x+duck.w,duck.y);
+    ctx.scale(-1,1);
+  } else ctx.translate(duck.x,duck.y);
+  ctx.drawImage(flapT>0?imgDuckFlap:imgDuck,0,0,duck.w,duck.h);
+  ctx.restore();
+  
+  if(flapT > 0) {
+    flapT -= dt;
+    if(flapT < 0) flapT = 0;
+  }
+
+  if (level === 5 && boss) {
+    updateBoss(dt);
+    drawBoss();
+    
+    if (hit(duck, boss) && boss.state !== 'dying') {
+      showGameOverMenu();
+      return;
+    }
+    
+    bossHealthEl.textContent = `Boss Health: ${boss.health}`;
+    
+  } else if (farm) {
+    const dx=duck.x-farm.x;
+    if(Math.abs(dx)>TURN) farm.flip=dx<0;
+    if(powerUps.slowFarmerActive && performance.now() >= powerUps.slowFarmerEnd){
+      powerUps.slowFarmerActive = false;
+      farm.spd = farm.baseSpd;
+      if (boss && boss.state !== 'dying') {
+        boss.spd = boss.enraged ? boss.baseSpd * 1.5 : boss.baseSpd;
+      }
+    }
+    farm.x+=Math.sign(dx)*farm.spd*dt;
+    farm.x=Math.max(0,Math.min(cvs.width-farm.w,farm.x));
+    
+    ctx.save();
+    if(farm.flip){
+      ctx.translate(farm.x+farm.w,farm.y);
+      ctx.scale(-1,1);
+    } else ctx.translate(farm.x,farm.y);
+    ctx.drawImage(imgFarm,0,0,farm.w,farm.h);
+    ctx.restore();
+    
+    if(hit(duck,farm)){
+      showGameOverMenu();
+      return;
+    }
+  }
+
+  coins = coins.filter(c=>{
+    c.x-=5*dt;
+    ctx.drawImage(imgCoin,c.x,c.y,c.w,c.h);
+    if(hit(duck,c)){
+      score+=100;
+      
+      if (level === 5 && boss && boss.state !== 'dying') {
+        damageBoss(5);
+      }
+      
+      sCoin.cloneNode().play().catch(()=>{});
+      scoreEl.textContent = "Score: "+score;
+      return false;
+    }
+    return c.x>-c.w;
+  });
+
+  updateParticles(dt);
+  drawParticles();
+
+  if(showDebug) {
+    const jumpDisplay = duck.jumps === Infinity ? "∞" : duck.jumps;
+    const maxJumpDisplay = duck.maxJumps === Infinity ? "∞" : duck.maxJumps;
+    let debugText = `
+      Level: ${level}<br>
+      Duck Y: ${duck.y.toFixed(1)}<br>
+      Duck VY: ${duck.vy.toFixed(1)}<br>
+      Jumps: ${jumpDisplay}/${maxJumpDisplay}<br>
+      On Ground: ${duck.onGround}<br>
+      Ground Level: ${groundLevel}<br>
+      Keys: ${Array.from(keysPressed).join(', ')}
+    `;
+    
+    if (boss) {
+      debugText += `<br>Boss State: ${boss.state}<br>Boss Health: ${boss.health}<br>Boss Enraged: ${boss.enraged}`;
+    }
+    
+    debugInfo.innerHTML = debugText;
+  }
+
+  if (level === 5) {
+    // Boss level - win when boss is defeated
+  } else {
+    if(score >= WIN[level]){
+      showWinMenu();
+      return;
+    }
+  }
+  
+  animId = requestAnimationFrame(loop);
+}
+
+/* ---------- input ---------- */
+window.addEventListener("keydown", function(e) {
+  if(!duck || !run || paused) return;
+  
+  const code = e.code;
+  keysPressed.add(code);
+  
+  if(code === "ArrowLeft" || code === "KeyA"){
+    duck.vx = -5;
+    duck.flip = true;
+  }
+  if(code === "ArrowRight" || code === "KeyD"){
+    duck.vx = 5;
+    duck.flip = false;
+  }
+  
+  if((code === "ArrowUp" || code === "Space") && !keysPressed.has('jumpPressed')){
+    let canJump = false;
+    
+    if(duck.maxJumps === Infinity) {
+      canJump = true;
+    } else if(duck.onGround) {
+      canJump = true;
+    } else if(duck.jumps > 0) {
+      canJump = true;
+    }
+    
+    if(canJump) {
+      duck.vy = cfg[level].jump;
+      
+      if(duck.maxJumps !== Infinity && !duck.onGround) {
+        duck.jumps--;
+      }
+      
+      sJump.cloneNode().play().catch(()=>{});
+      flapT = 15;
+      keysPressed.add('jumpPressed');
+    }
+  }
+  
+  if(code === "KeyS") {
+    activateSlowFarmer();
+  }
+});
+
+window.addEventListener("keyup", function(e) {
+  if(!duck) return;
+  
+  const code = e.code;
+  keysPressed.delete(code);
+  
+  if(code === "ArrowLeft" || code === "KeyA" || code === "ArrowRight" || code === "KeyD") {
+    duck.vx = 0;
+  }
+  
+  if(code === "ArrowUp" || code === "Space") {
+    keysPressed.delete('jumpPressed');
+  }
+});
+
+window.addEventListener("mousedown", (e) => {
+  if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+  cvs.focus();
+});
+
+/* ---------- button wiring ---------- */
+playAgainBtn.onclick = () => {
+  hideAllMenus();
+  startLevel(1);
+};
+
+backToMenuBtn.onclick = () => {
+  hideAllMenus();
+  returnToMainMenu();
+};
+
+redoBtn.onclick = () => {
+  points = levelStartPoints;
+  startLevel(level);
+};
+backBtnSide.onclick = backBtn.onclick = () => {
+  if(run) stopLevel();
+  if(menu.style.display === "block" && menuText.textContent.includes("Complete!")) {
+    const nextLevel = level + 1;
+    if(nextLevel <= maxLevel && !unlocked.includes(nextLevel)){
+      unlocked.push(nextLevel);
+    }
+  }
+  if(gameCompleted) {
+    hideAllMenus();
+    showEndScreen();
+  } else {
+    returnToMainMenu();
+  }
+};
+pauseBtn.onclick = () => {
+  if(!run) return;
+  paused = !paused;
+  pauseBtn.textContent = paused ? "Resume" : "Pause";
+  if(paused) music.pause();
+  else if(run) playMusic();
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+};
+muteBtn.onclick = () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? "Unmute" : "Mute";
+  if(muted) music.pause();
+  else if(run && !paused) music.play();
+};
+debugBtn.onclick = () => {
+  showDebug = !showDebug;
+  debugBtn.textContent = showDebug ? "Hide Debug" : "Debug";
+  debugInfo.style.display = showDebug ? "block" : "none";
+};
+resetBtn.onclick = () => {
+  if(confirm("Are you sure you want to reset all progress? This will unlock only Level 1, reset your points to 0, and remove all purchased power-ups.")) {
+    unlocked = [1];
+    points = 0;
+    powerUps = {
+      extraJump: false,
+      slowFarmer: false,
+      slowFarmerActive: false,
+      slowFarmerEnd: 0
+    };
+    updateShopButtons();
+    buildLevelMenu();
+  }
+};
+shopBtn.onclick = () => {
+  coinsTotal.textContent = "Points: " + points;
+  updateShopButtons();
+  hideAllMenus();
+  shop.style.display = "block";
+};
+closeShop.onclick = () => {
+  returnToMainMenu();
+};
+saveBtn.onclick = () => {
+  const save = {unlocked, points, powerUps};
+  alert("Progress saved! (Note: Saving is disabled in this demo environment)");
+};
+function updateShopButtons() {
+  if(powerUps.extraJump) {
+    buyJump.textContent = "Extra Jump ✓\nPurchased";
+    buyJump.className = "purchased";
+    buyJump.disabled = true;
+  } else {
+    buyJump.textContent = "Buy Extra Jump\n500 points";
+    buyJump.className = "";
+    buyJump.disabled = false;
+  }
+  if(powerUps.slowFarmer) {
+    buySlow.textContent = "Slow Farmer ✓\nPress 'S' in game";
+    buySlow.className = "purchased";
+    buySlow.disabled = true;
+  } else {
+    buySlow.textContent = "Buy Slow Farmer\n800 points";
+    buySlow.className = "";
+    buySlow.disabled = false;
+  }
+}
+buyJump.onclick = () => {
+  if(powerUps.extraJump) return;
+  if(points < 500) return alert("Not enough points!");
+  points -= 500;
+  powerUps.extraJump = true;
+  coinsTotal.textContent = "Points: " + points;
+  updateShopButtons();
+  alert("Extra jump purchased! You now get +1 jump on levels 3-5!");
+};
+buySlow.onclick = () => {
+  if(powerUps.slowFarmer) return;
+  if(points < 800) return alert("Not enough points!");
+  points -= 800;
+  powerUps.slowFarmer = true;
+  coinsTotal.textContent = "Points: " + points;
+  updateShopButtons();
+  alert("Slow Farmer purchased! Press 'S' during gameplay to slow the farmer for 15 seconds!");
+};
+
+/* ---------- load save ---------- */
+function loadSave(){
+  buildLevelMenu();
+}
+
+/* ---------- initial setup ---------- */
+function init(){
+  hideAllMenus();
+  scoreEl.style.display="none";
+  hideControls();
+  levelSel.style.display="block";
+  loadSave();
+}
+if(assets === 5) init();
+</script>
+</body>
+</html>
