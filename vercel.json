@@ -2,14 +2,14 @@
     "version": 2,
     "builds": [
       {
-        "src": "3rdpage.html",
+        "src": "Example.html",
         "use": "@vercel/static"
       }
     ],
     "routes": [
       {
         "src": "/",
-        "dest": "/3rdpage.html"
+        "dest": "/Example.html"
       }
     ]
   }
