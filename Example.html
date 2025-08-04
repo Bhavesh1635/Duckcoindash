@@ -237,7 +237,7 @@ imgBoss.src="https://i.ibb.co/mVVd4Fk6/f1f0e768-91f2-42ee-99a5-3fc15e21bc82.png"
 /* ---------- sounds ---------- */
 const sCoin=new Audio("retro-coin-4-236671.mp3"),
       sJump=new Audio("wing-flap-1-6434.mp3"),
-     const music = new Audio("8bit-sample.mp3");
+      music=new Audio("background-music.mp3");
 music.loop=true;music.volume=.3;
 window.addEventListener("pointerdown",()=>[sCoin,sJump,music].forEach(a=>a.play()
   .then(()=>{a.pause();a.currentTime=0;}).catch(()=>{})),{once:true});
