@@ -239,8 +239,17 @@ const sCoin = new Audio("./retro-coin-4-236671.mp3"),
       sJump = new Audio("./wing-flap-1-6434.mp3"),
       music = new Audio("./background-music.mp3");
 music.loop=true;music.volume=.3;
-window.addEventListener("pointerdown",()=>[sCoin,sJump,music].forEach(a=>a.play()
-  .then(()=>{a.pause();a.currentTime=0;}).catch(()=>{})),{once:true});
+// ⬇️ ADD THIS RIGHT AFTER sound setup
+function allowAudioPlayback() {
+  sCoin.play().catch(() => {});
+  sJump.play().catch(() => {});
+  music.play().catch(() => {});
+  window.removeEventListener("pointerdown", allowAudioPlayback);
+}
+
+// ⬇️ This waits for a real click/tap before sounds play
+window.addEventListener("pointerdown", allowAudioPlayback);
+
 
 /* ---------- canvas ---------- */
 const cvs=document.getElementById("gameCanvas"),ctx=cvs.getContext("2d"),groundY=100;
@@ -1353,4 +1362,5 @@ if(assets === 5) init();
 </script>
 </body>
 </html>
+
 
